@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZLWL · Cyber</title>
+    <title>ZLWL · Cyber Nebula</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
         /* ========== 设计变量 ========== */
         :root {
-            --bg0: #0d0d1a;
-            --bg1: #161625;
-            --bg2: #202038;
+            --bg0: #000005;
+            --bg1: #0a0a1a;
             --cyan: #00f6ff;
             --purple: #bc00ff;
             --pink: #ff00c1;
@@ -39,6 +38,17 @@
         ::selection {
             background: var(--cyan);
             color: #000;
+        }
+
+        /* ========== 星空背景 ========== */
+        #stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
         }
 
         /* ========== 滚动进度条 ========== */
@@ -272,6 +282,9 @@
     </style>
 </head>
 <body>
+    <!-- 星空画布 -->
+    <canvas id="stars"></canvas>
+
     <!-- 滚动进度条 -->
     <div id="progress"></div>
 
@@ -394,6 +407,97 @@
             const rx = (y / h - 0.5) * 15;
             const ry = (x / w - 0.5) * -15;
             hero.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+        });
+
+        /* ========== 动态星空 ========== */
+        const canvas = document.getElementById('stars');
+        const ctx = canvas.getContext('2d');
+        let w = (canvas.width = window.innerWidth);
+        let h = (canvas.height = window.innerHeight);
+
+        const stars = [];
+        const shootingStars = [];
+        const starCount = 300;
+        const shootingStarCount = 3;
+
+        class Star {
+            constructor() {
+                this.x = Math.random() * w;
+                this.y = Math.random() * h;
+                this.size = Math.random() * 1.5;
+                this.speed = Math.random() * 0.15;
+                this.opacity = Math.random() * 0.5 + 0.5;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(200, 220, 255, ${this.opacity})`;
+                ctx.fill();
+            }
+            update() {
+                this.y += this.speed;
+                if (this.y > h) {
+                    this.y = 0;
+                    this.x = Math.random() * w;
+                }
+                this.draw();
+            }
+        }
+
+        class ShootingStar {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * w;
+                this.y = -10;
+                this.len = Math.random() * 80 + 20;
+                this.speed = Math.random() * 8 + 4;
+                this.opacity = 1;
+                this.angle = Math.random() * 0.5 + 0.2;
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.beginPath();
+                const grad = ctx.createLinearGradient(0, 0, this.len, 0);
+                grad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+                grad.addColorStop(1, 'rgba(255, 255, 255, ' + this.opacity + ')');
+                ctx.strokeStyle = grad;
+                ctx.lineWidth = 2;
+                ctx.moveTo(0, 0);
+                ctx.lineTo(this.len, 0);
+                ctx.stroke();
+                ctx.restore();
+            }
+            update() {
+                this.x += this.speed * Math.cos(this.angle);
+                this.y += this.speed * Math.sin(this.angle);
+                this.opacity -= 0.01;
+                if (this.opacity <= 0) this.reset();
+                this.draw();
+            }
+        }
+
+        function init() {
+            for (let i = 0; i < starCount; i++) stars.push(new Star());
+            for (let i = 0; i < shootingStarCount; i++) shootingStars.push(new ShootingStar());
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, w, h);
+            stars.forEach(s => s.update());
+            shootingStars.forEach(s => s.update());
+            requestAnimationFrame(animate);
+        }
+
+        init();
+        animate();
+
+        window.addEventListener('resize', () => {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
         });
     </script>
 </body>
